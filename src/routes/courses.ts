@@ -21,7 +21,26 @@ export const coursesRouter = Router();
   *       "200":
   *         description: OK
   */
-coursesRouter.get("/courses", async (_req, res) => {
+coursesRouter.get("/courses", async (req, res) => {
+  const courseId = Number(req.query.id);
+
+  if (courseId) {
+    const data = await db.query.courses.findFirst({
+      where: eq(courses.id, courseId),
+      with: {
+        textBlocks: true,
+        tests: {
+          with: {
+            answers: true,
+          },
+        },
+      },
+    })
+
+    res.send(data);
+    return;
+  }
+
   const data = await db.query.courses.findMany({
     with: {
       textBlocks: true,
