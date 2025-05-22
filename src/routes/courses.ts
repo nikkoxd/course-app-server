@@ -123,7 +123,23 @@ coursesRouter.post("/", async (req, res) => {
         right: z.boolean(),
       })).min(1),
     })).optional(),
-  })
+  }).superRefine((data, ctx) => {
+    if (data.hasTests && (!data.tests || data.tests.length == 0)) {
+      ctx.addIssue({
+        path: ["tests"],
+        message: "Tests should be provided if hasTests is true",
+        code: z.ZodIssueCode.custom,
+      })
+    }
+
+    if (!data.hasTests && data.tests && data.tests.length > 0) {
+      ctx.addIssue({
+        path: ["tests"],
+        message: "Tests should not be provided if hasTests is false",
+        code: z.ZodIssueCode.custom,
+      })
+    }
+  });
   const parsedBody = bodySchema.parse(req.body);
 
   const [newCourse] = await db.insert(courses).values({
