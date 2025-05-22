@@ -29,9 +29,6 @@ importers:
       drizzle-orm:
         specifier: ^0.43.1
         version: 0.43.1(@libsql/client@0.15.7)(pg@8.15.6)
-      drizzle-zod:
-        specifier: ^0.8.1
-        version: 0.8.1(drizzle-orm@0.43.1(@libsql/client@0.15.7)(pg@8.15.6))(zod@3.25.8)
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -60,9 +57,6 @@ importers:
       drizzle-kit:
         specifier: ^0.31.1
         version: 0.31.1
-      tsx:
-        specifier: ^4.19.4
-        version: 4.19.4
 
 packages:
 
@@ -734,12 +728,6 @@ packages:
       sqlite3:
         optional: true
 
-  drizzle-zod@0.8.1:
-    resolution: {integrity: sha512-k2/2cwBz3Vjb7CWPVCeMNajZpG43V7SqhNrZ8LsWJOz8TztQ5YtU2ifgnfnxqZXsxeHmdQnsl6eXm7GwDZnq/Q==}
-    peerDependencies:
-      drizzle-orm: '>=0.36.0'
-      zod: ^3.25.1
-
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -1194,11 +1182,6 @@ packages:
         optional: true
       '@swc/wasm':
         optional: true
-
-  tsx@4.19.4:
-    resolution: {integrity: sha512-gK5GVzDkJK1SI1zwHf32Mqxf2tSJkNx+eYcNly5+nHvWqXUJYUkWBQtKauoESz3ymezAI++ZwT855x5p5eop+Q==}
-    engines: {node: '>=18.0.0'}
-    hasBin: true
 
   type-is@2.0.1:
     resolution: {integrity: sha512-OZs6gsjF4vMp32qrCbiVSkrFmXtG/AZhY3t0iAMrMBiAZyV9oALtXO8hsrHbMXF9x6L3grlFuwW2oAz7cav+Gw==}
@@ -1719,11 +1702,6 @@ snapshots:
     optionalDependencies:
       '@libsql/client': 0.15.7
       pg: 8.15.6
-
-  drizzle-zod@0.8.1(drizzle-orm@0.43.1(@libsql/client@0.15.7)(pg@8.15.6))(zod@3.25.8):
-    dependencies:
-      drizzle-orm: 0.43.1(@libsql/client@0.15.7)(pg@8.15.6)
-      zod: 3.25.8
 
   dunder-proto@1.0.1:
     dependencies:
@@ -2276,13 +2254,6 @@ snapshots:
       typescript: 5.8.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
-
-  tsx@4.19.4:
-    dependencies:
-      esbuild: 0.25.4
-      get-tsconfig: 4.10.1
-    optionalDependencies:
-      fsevents: 2.3.3
 
   type-is@2.0.1:
     dependencies:
