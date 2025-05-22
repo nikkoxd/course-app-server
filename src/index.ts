@@ -28,7 +28,7 @@ const swaggerDocs = swaggerJSDoc({
 app.use(bodyParser.json());
 app.use("/api-docs", SwaggerUi.serve);
 app.get("/api-docs", SwaggerUi.setup(swaggerDocs));
-app.use("/courses", coursesRouter)
+app.use("/api/courses", coursesRouter)
 
 app.listen(3000);
 console.log("Server started on port 3000");
