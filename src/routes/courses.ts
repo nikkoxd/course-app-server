@@ -1,9 +1,10 @@
-import { Request, Router } from "express";
+import express, { Request } from "express";
 import { db } from "..";
 import { answers, courses, tests, textBlocks } from "../schema";
 import { eq, inArray } from "drizzle-orm";
+import { z } from "zod";
 
-export const coursesRouter = Router();
+export const coursesRouter = express.Router();
 
 /**
   * @openapi
@@ -20,11 +21,17 @@ export const coursesRouter = Router();
   *     responses:
   *       "200":
   *         description: OK
+  *       "400":
+  *         description: Invalid course ID
   */
-coursesRouter.get("/courses", async (req, res) => {
+coursesRouter.get("/", async (req, res) => {
   const courseId = Number(req.query.id);
 
   if (courseId) {
+    if (isNaN(courseId)) {
+      res.status(400).send("Invalid course ID");
+    }
+
     const data = await db.query.courses.findFirst({
       where: eq(courses.id, courseId),
       with: {
@@ -100,36 +107,52 @@ coursesRouter.get("/courses", async (req, res) => {
   *       "200":
   *         description: OK
   */
-coursesRouter.post("/courses", async (req, res) => {
-  const { theme, readingTime, hasTests, textBlocks: tb, tests: t } = req.body;
+coursesRouter.post("/", async (req, res) => {
+  const bodySchema = z.object({
+    theme: z.string(),
+    readingTime: z.string(),
+    hasTests: z.boolean(),
+    textBlocks: z.array(z.object({
+      name: z.string(),
+      text: z.string(),
+    })).min(1),
+    tests: z.array(z.object({
+      question: z.string(),
+      answers: z.array(z.object({
+        text: z.string(),
+        right: z.boolean(),
+      })).min(1),
+    })).optional(),
+  })
+  const parsedBody = bodySchema.parse(req.body);
 
-  const [newCourse] = await db.insert(courses).values({ theme, readingTime, hasTests }).returning();
+  const [newCourse] = await db.insert(courses).values({
+    theme: parsedBody.theme,
+    readingTime: parsedBody.readingTime,
+    hasTests: parsedBody.hasTests,
+  }).returning();
   const courseId = newCourse.id;
 
-  if (tb.length > 0) {
-    await db.insert(textBlocks).values(
-      tb.map((block: typeof textBlocks) => ({
-        courseId,
-        name: block.name,
-        text: block.text,
-      }))
-    );
-  }
+  await db.insert(textBlocks).values(
+    parsedBody.textBlocks.map((block) => ({
+      courseId,
+      name: block.name,
+      text: block.text,
+    }))
+  );
 
-  if (t.length > 0) {
-    for (const test of t) {
+  if (parsedBody.tests) {
+    for (const test of parsedBody.tests) {
       const [newTest] = await db.insert(tests).values({ courseId, question: test.question }).returning();
       const testId = newTest.id;
 
-      if (test.answers.length > 0) {
-        await db.insert(answers).values(
-          test.answers.map((answer: typeof answers) => ({
-            testId,
-            text: answer.text,
-            right: answer.right,
-          }))
-        );
-      }
+      await db.insert(answers).values(
+        test.answers.map((answer) => ({
+          testId,
+          text: answer.text,
+          right: answer.right,
+        }))
+      );
     }
   }
 
@@ -151,11 +174,17 @@ coursesRouter.post("/courses", async (req, res) => {
   *     responses:
   *       "200":
   *         description: OK
+  *       "400":
+  *         description: Invalid course ID
   *       "500":
   *         description: Internal server error
   */
-coursesRouter.delete("/courses", async (req: Request<{ id: number }>, res) => {
+coursesRouter.delete("/", async (req: Request<{ id: number }>, res) => {
   const courseId = Number(req.query.id);
+
+  if (isNaN(courseId)) {
+    res.status(400).send("Invalid course ID");
+  }
 
   try {
     await db.transaction(async (tx) => {
@@ -173,6 +202,6 @@ coursesRouter.delete("/courses", async (req: Request<{ id: number }>, res) => {
 
     res.send("Course removed");
   } catch (error) {
-    res.status(500).send(`Failed to remove course: ${error}`);
+    res.status(500).send("Internal server error");
   }
 })
