@@ -15,12 +15,16 @@
   "dependencies": {
     "@libsql/client": "^0.15.7",
     "@types/express": "^5.0.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "body-parser": "^2.2.0",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.8.1",
     "express": "^5.1.0",
     "nodemon": "^3.1.10",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "zod": "^3.25.8"
