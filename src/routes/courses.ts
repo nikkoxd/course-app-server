@@ -32,8 +32,29 @@ coursesRouter.get("/", async (req, res) => {
       res.status(400).send("Invalid course ID");
     }
 
-    const data = await db.query.courses.findFirst({
-      where: eq(courses.id, courseId),
+    try {
+      const data = await db.query.courses.findFirst({
+        where: eq(courses.id, courseId),
+        with: {
+          textBlocks: true,
+          tests: {
+            with: {
+              answers: true,
+            },
+          },
+        },
+      })
+
+      res.send(data);
+    } catch (error) {
+      res.status(500).send("Internal server error");
+    }
+
+    return;
+  }
+
+  try {
+    const data = await db.query.courses.findMany({
       with: {
         textBlocks: true,
         tests: {
@@ -42,24 +63,12 @@ coursesRouter.get("/", async (req, res) => {
           },
         },
       },
-    })
+    });
 
     res.send(data);
-    return;
+  } catch (error) {
+    res.status(500).send("Internal server error");
   }
-
-  const data = await db.query.courses.findMany({
-    with: {
-      textBlocks: true,
-      tests: {
-        with: {
-          answers: true,
-        },
-      },
-    },
-  });
-
-  res.send(data);
 })
 
 /**
@@ -167,37 +176,41 @@ coursesRouter.post("/", async (req, res) => {
   }
 
   if (parsedBody.data) {
-    const [newCourse] = await db.insert(courses).values({
-      theme: parsedBody.data.theme,
-      readingTime: parsedBody.data.readingTime,
-      hasTests: parsedBody.data.hasTests,
-    }).returning();
-    const courseId = newCourse.id;
+    try {
+      const [newCourse] = await db.insert(courses).values({
+        theme: parsedBody.data.theme,
+        readingTime: parsedBody.data.readingTime,
+        hasTests: parsedBody.data.hasTests,
+      }).returning();
+      const courseId = newCourse.id;
 
-    await db.insert(textBlocks).values(
-      parsedBody.data.textBlocks.map((block) => ({
-        courseId,
-        name: block.name,
-        text: block.text,
-      }))
-    );
+      await db.insert(textBlocks).values(
+        parsedBody.data.textBlocks.map((block) => ({
+          courseId,
+          name: block.name,
+          text: block.text,
+        }))
+      );
 
-    if (parsedBody.data.tests) {
-      for (const test of parsedBody.data.tests) {
-        const [newTest] = await db.insert(tests).values({ courseId, question: test.question }).returning();
-        const testId = newTest.id;
+      if (parsedBody.data.tests) {
+        for (const test of parsedBody.data.tests) {
+          const [newTest] = await db.insert(tests).values({ courseId, question: test.question }).returning();
+          const testId = newTest.id;
 
-        await db.insert(answers).values(
-          test.answers.map((answer) => ({
-            testId,
-            text: answer.text,
-            right: answer.right,
-          }))
-        );
+          await db.insert(answers).values(
+            test.answers.map((answer) => ({
+              testId,
+              text: answer.text,
+              right: answer.right,
+            }))
+          );
+        }
       }
-    }
 
-    res.send("Course added");
+      res.send("Course added");
+    } catch (error) {
+      res.status(500).send("Internal server error");
+    }
   }
 })
 
