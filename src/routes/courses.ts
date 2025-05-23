@@ -139,6 +139,26 @@ coursesRouter.post("/", async (req, res) => {
         code: z.ZodIssueCode.custom,
       })
     }
+
+    if (data.hasTests && data.tests) {
+      for (const test of data.tests) {
+        const rightCount = test.answers.filter((answer) => answer.right).length;
+        if (rightCount == 0) {
+          ctx.addIssue({
+            path: ["tests", test.question, "answers"],
+            message: "At least one answer should be marked as right",
+            code: z.ZodIssueCode.custom,
+          })
+        }
+        if (rightCount > 1) {
+          ctx.addIssue({
+            path: ["tests", test.question, "answers"],
+            message: "At most one answer should be marked as right",
+            code: z.ZodIssueCode.custom,
+          })
+        }
+      }
+    }
   });
   const parsedBody = bodySchema.parse(req.body);
 
