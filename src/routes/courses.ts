@@ -1,7 +1,7 @@
 import express, { Request } from "express";
 import { db } from "..";
 import { answers, courses, tests, textBlocks } from "../schema";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, like, SQL, SQLWrapper } from "drizzle-orm";
 import { z } from "zod";
 
 export const coursesRouter = express.Router();
@@ -25,16 +25,28 @@ export const coursesRouter = express.Router();
   *         description: Invalid course ID
   */
 coursesRouter.get("/", async (req, res) => {
-  const courseId = Number(req.query.id);
+  const querySchema = z.object({
+    id: z.string().regex(/^[0-9]+$/).optional(),
+    theme: z.string().optional(),
+    readingTime: z.string().optional(),
+    hasTests: z.string().optional(),
+  });
+  const parsedQuery = querySchema.safeParse(req.query);
 
-  if (courseId) {
-    if (isNaN(courseId)) {
+  if (!parsedQuery.success) {
+    res.status(400).send(parsedQuery.error.issues);
+  }
+
+  if (parsedQuery.data?.id) {
+    const id = Number(parsedQuery.data.id);
+
+    if (isNaN(id)) {
       res.status(400).send("Invalid course ID");
     }
 
     try {
       const data = await db.query.courses.findFirst({
-        where: eq(courses.id, courseId),
+        where: eq(courses.id, id),
         with: {
           textBlocks: true,
           tests: {
@@ -53,8 +65,24 @@ coursesRouter.get("/", async (req, res) => {
     return;
   }
 
+  let filter: SQLWrapper[] = [];
+
+  if (parsedQuery.data?.theme) {
+    const theme = "%" + parsedQuery.data.theme + "%";
+    filter.push(like(courses.theme, theme));
+  }
+  if (parsedQuery.data?.readingTime) {
+    const readingTime = "%" + parsedQuery.data.readingTime + "%";
+    filter.push(like(courses.readingTime, readingTime));
+  }
+  if (parsedQuery.data?.hasTests) {
+    const hasTests = parsedQuery.data.hasTests === "true";
+    filter.push(eq(courses.hasTests, hasTests));
+  }
+
   try {
     const data = await db.query.courses.findMany({
+      where: and(...filter),
       with: {
         textBlocks: true,
         tests: {
