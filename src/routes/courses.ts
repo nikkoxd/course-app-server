@@ -160,39 +160,45 @@ coursesRouter.post("/", async (req, res) => {
       }
     }
   });
-  const parsedBody = bodySchema.parse(req.body);
+  const parsedBody = bodySchema.safeParse(req.body);
 
-  const [newCourse] = await db.insert(courses).values({
-    theme: parsedBody.theme,
-    readingTime: parsedBody.readingTime,
-    hasTests: parsedBody.hasTests,
-  }).returning();
-  const courseId = newCourse.id;
-
-  await db.insert(textBlocks).values(
-    parsedBody.textBlocks.map((block) => ({
-      courseId,
-      name: block.name,
-      text: block.text,
-    }))
-  );
-
-  if (parsedBody.tests) {
-    for (const test of parsedBody.tests) {
-      const [newTest] = await db.insert(tests).values({ courseId, question: test.question }).returning();
-      const testId = newTest.id;
-
-      await db.insert(answers).values(
-        test.answers.map((answer) => ({
-          testId,
-          text: answer.text,
-          right: answer.right,
-        }))
-      );
-    }
+  if (!parsedBody.success) {
+    res.status(400).send(parsedBody.error.issues);
   }
 
-  res.send("Course added");
+  if (parsedBody.data) {
+    const [newCourse] = await db.insert(courses).values({
+      theme: parsedBody.data.theme,
+      readingTime: parsedBody.data.readingTime,
+      hasTests: parsedBody.data.hasTests,
+    }).returning();
+    const courseId = newCourse.id;
+
+    await db.insert(textBlocks).values(
+      parsedBody.data.textBlocks.map((block) => ({
+        courseId,
+        name: block.name,
+        text: block.text,
+      }))
+    );
+
+    if (parsedBody.data.tests) {
+      for (const test of parsedBody.data.tests) {
+        const [newTest] = await db.insert(tests).values({ courseId, question: test.question }).returning();
+        const testId = newTest.id;
+
+        await db.insert(answers).values(
+          test.answers.map((answer) => ({
+            testId,
+            text: answer.text,
+            right: answer.right,
+          }))
+        );
+      }
+    }
+
+    res.send("Course added");
+  }
 })
 
 /**
