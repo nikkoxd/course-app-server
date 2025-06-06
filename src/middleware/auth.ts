@@ -31,7 +31,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       );
 
       res.cookie(
-        "refresh-token",
+        "access-token",
         accessToken,
         { httpOnly: true, expires: new Date(Date.now() + 60_000) }
       );
