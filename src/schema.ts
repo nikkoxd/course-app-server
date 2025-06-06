@@ -45,3 +45,9 @@ export const answers = sqliteTable("answers", {
 export const answersRelations = relations(answers, ({ one }) => ({
   test: one(tests, { fields: [answers.testId], references: [tests.id] }),
 }))
+
+export const users = sqliteTable("users", {
+  id: int("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull(),
+  hashedPassword: text("password").notNull(),
+})

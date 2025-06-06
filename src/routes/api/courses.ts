@@ -1,7 +1,7 @@
 import express, { Request } from "express";
-import { db } from "..";
-import { answers, courses, tests, textBlocks } from "../schema";
-import { and, eq, inArray, like, SQL, SQLWrapper } from "drizzle-orm";
+import { db } from "../..";
+import { answers, courses, tests, textBlocks } from "../../schema";
+import { and, eq, inArray, like, SQLWrapper } from "drizzle-orm";
 import { z } from "zod";
 
 export const coursesRouter = express.Router();
@@ -17,6 +17,21 @@ export const coursesRouter = express.Router();
   *         schema:
   *           type: integer
   *         description: ID of the course to get
+  *       - in: query
+  *         name: theme
+  *         schema:
+  *           type: string
+  *         description: Course theme
+  *       - in: query
+  *         name: readingTime
+  *         schema:
+  *           type: string
+  *         description: Course reading time
+  *       - in: query
+  *         name: hasTests
+  *         schema:
+  *           type: string
+  *         description: Course reading time
   *
   *     responses:
   *       "200":
@@ -67,6 +82,8 @@ coursesRouter.get("/", async (req, res) => {
 
   let filter: SQLWrapper[] = [];
 
+  console.log(parsedQuery);
+
   if (parsedQuery.data?.theme) {
     const theme = "%" + parsedQuery.data.theme + "%";
     filter.push(like(courses.theme, theme));
@@ -76,7 +93,7 @@ coursesRouter.get("/", async (req, res) => {
     filter.push(like(courses.readingTime, readingTime));
   }
   if (parsedQuery.data?.hasTests) {
-    const hasTests = parsedQuery.data.hasTests === "true";
+    const hasTests = parsedQuery.data.hasTests === "on";
     filter.push(eq(courses.hasTests, hasTests));
   }
 
@@ -200,7 +217,7 @@ coursesRouter.post("/", async (req, res) => {
   const parsedBody = bodySchema.safeParse(req.body);
 
   if (!parsedBody.success) {
-    res.status(400).send(parsedBody.error.issues);
+    res.status(400).send(parsedBody.error.format());
   }
 
   if (parsedBody.data) {

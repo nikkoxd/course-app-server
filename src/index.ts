@@ -5,7 +5,10 @@ import bodyParser from "body-parser";
 import * as schema from "./schema";
 import SwaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
-import { coursesRouter } from "./routes/courses";
+import { coursesRouter } from "./routes/api/courses";
+import { adminRouter } from "./routes/admin";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
 export const db = drizzle({
   connection: process.env.DB_FILE_NAME!,
@@ -22,13 +25,20 @@ const swaggerDocs = swaggerJSDoc({
       description: "API for managing courses",
     }
   },
-  apis: ["./src/routes/*.ts"]
+  apis: ["./src/routes/api/*.ts"]
 })
 
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}))
 app.use(bodyParser.json());
+app.use(cookieParser());
+
 app.use("/api-docs", SwaggerUi.serve);
 app.get("/api-docs", SwaggerUi.setup(swaggerDocs));
-app.use("/api/courses", coursesRouter)
+app.use("/api/courses", coursesRouter);
+app.use("/admin", adminRouter);
 
 app.listen(3000);
 console.log("Server started on port 3000");
