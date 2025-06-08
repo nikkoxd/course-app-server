@@ -29,7 +29,7 @@ const swaggerDocs = swaggerJSDoc({
 })
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: process.env.CORS_ORIGIN_URL,
   credentials: true,
 }))
 app.use(bodyParser.json());
