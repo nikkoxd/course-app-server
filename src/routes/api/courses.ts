@@ -82,8 +82,6 @@ coursesRouter.get("/", async (req, res) => {
 
   let filter: SQLWrapper[] = [];
 
-  console.log(parsedQuery);
-
   if (parsedQuery.data?.theme) {
     const theme = "%" + parsedQuery.data.theme + "%";
     filter.push(like(courses.theme, theme));
