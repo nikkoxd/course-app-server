@@ -4,7 +4,7 @@ import { db } from "..";
 import { courses, users } from "../schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { authenticate } from "../middleware/auth";
 
 export const adminRouter = express.Router();
@@ -54,7 +54,7 @@ adminRouter.post("/refresh", async (req, res) => {
 
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-    const accessToken = jwt.sign({ decoded }, process.env.JWT_SECRET, { expiresIn: "1m" });
+    const accessToken = jwt.sign({ id: (decoded as JwtPayload).id }, process.env.JWT_SECRET, { expiresIn: "1m" });
 
     res
       .cookie("access-token", accessToken, { httpOnly: true, expires: new Date(Date.now() + 60_000) })
@@ -71,8 +71,11 @@ adminRouter.get("/data", authenticate, async (req, res) => {
 })
 
 adminRouter.get("/user", authenticate, async (req, res) => {
-  console.log(res.locals);
-  // const user = await db.select({ id: users.id, username: users.username}).from(users).where(eq(users.id, res.locals.user.id));
-  // res.send(user);
-  res.send({ id: 1, username: "admin" });
+  if (!res.locals.user) {
+    res.status(401).send("No user");
+    return;
+  }
+
+  const user = await db.select({ id: users.id, username: users.username}).from(users).where(eq(users.id, res.locals.user.id));
+  res.send(user);
 })

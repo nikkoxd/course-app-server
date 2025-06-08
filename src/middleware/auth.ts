@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export async function authenticate(req: Request, res: Response, next: NextFunction) {
   if (!process.env.JWT_SECRET) {
@@ -20,12 +20,13 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   } catch (error) {
     if (!refreshToken) {
       res.status(401).send("No refresh token provided");
+      return;
     }
 
     try {
       const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
       const accessToken = jwt.sign(
-        { decoded },
+        { id: (decoded as JwtPayload).id },
         process.env.JWT_SECRET,
         { expiresIn: "1m" }
       );
